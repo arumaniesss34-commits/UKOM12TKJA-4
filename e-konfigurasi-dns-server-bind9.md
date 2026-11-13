@@ -22,7 +22,7 @@ Tambahkan konfigurasi berikut di bagian paling bawah file:
 ```conf
 zone "ukom12tkja-4.sch.id" {
     type master;
-    file "/etc/bind/db.ukom12tkja-4.sch.id";
+    file "/etc/bind/db.ukom12tkja-4";
 };
 ```
 
@@ -33,13 +33,13 @@ Simpan file setelah selesai mengedit.
 Salin file zona bawaan sebagai template:
 
 ```bash
-sudo cp /etc/bind/db.local /etc/bind/db.ukom12tkja-4.sch.id
+sudo cp /etc/bind/db.local /etc/bind/db.ukom12tkja-4
 ```
 
 Kemudian buka file zona yang baru dibuat:
 
 ```bash
-sudo nano /etc/bind/db.ukom12tkja-4.sch.id
+sudo nano /etc/bind/db.ukom12tkja-4
 ```
 
 Sesuaikan isinya menjadi seperti berikut:
@@ -113,7 +113,7 @@ sudo named-checkconf
 Jika tidak ada pesan kesalahan, periksa file zona:
 
 ```bash
-sudo named-checkzone ukom12tkja-4.sch.id /etc/bind/db.ukom12tkja-4.sch.id
+sudo named-checkzone ukom12tkja-4.sch.id /etc/bind/db.ukom12tkja-4
 ```
 
 Pastikan hasil pemeriksaan menunjukkan status `OK`.
