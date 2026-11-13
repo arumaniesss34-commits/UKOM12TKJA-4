@@ -20,9 +20,9 @@ sudo nano /etc/bind/named.conf.local
 Tambahkan konfigurasi berikut di bagian paling bawah file:
 
 ```conf
-zone "ukomtkj-4.sch.id" {
+zone "ukom12tkja-4.sch.id" {
     type master;
-    file "/etc/bind/db.ukomtkj-4";
+    file "/etc/bind/db.ukom12tkja-4.sch.id";
 };
 ```
 
@@ -33,20 +33,20 @@ Simpan file setelah selesai mengedit.
 Salin file zona bawaan sebagai template:
 
 ```bash
-sudo cp /etc/bind/db.local /etc/bind/db.ukomtkj-4
+sudo cp /etc/bind/db.local /etc/bind/db.ukom12tkja-4.sch.id
 ```
 
 Kemudian buka file zona yang baru dibuat:
 
 ```bash
-sudo nano /etc/bind/db.ukomtkj-4
+sudo nano /etc/bind/db.ukom12tkja-4.sch.id
 ```
 
 Sesuaikan isinya menjadi seperti berikut:
 
 ```dns
 $TTL 604800
-@   IN  SOA ns.ukomtkj-4.sch.id. root.ukomtkj-4.sch.id. (
+@   IN  SOA ns.ukom12tkja-4.sch.id. root.ukom12tkja-4.sch.id. (
         2026102501
         604800
         86400
@@ -54,7 +54,7 @@ $TTL 604800
         604800
 )
 
-@   IN  NS  ns.ukomtkj-4.sch.id.
+@   IN  NS  ns.ukom12tkja-4.sch.id.
 @   IN  A   10.10.4.3
 ns  IN  A   10.10.4.3
 www IN  A   10.10.4.3
@@ -113,7 +113,7 @@ sudo named-checkconf
 Jika tidak ada pesan kesalahan, periksa file zona:
 
 ```bash
-sudo named-checkzone ukomtkj-4.sch.id /etc/bind/db.ukomtkj-4
+sudo named-checkzone ukom12tkja-4.sch.id /etc/bind/db.ukom12tkja-4.sch.id
 ```
 
 Pastikan hasil pemeriksaan menunjukkan status `OK`.
@@ -128,6 +128,14 @@ sudo systemctl restart bind9
 sudo systemctl status bind9
 ```
 
+atau klo gabisa, maka pake:
+
+```bash
+sudo systemctl enable --now named
+sudo systemctl restart named
+sudo systemctl status named
+```
+
 Pastikan status layanan menunjukkan `active (running)`.
 
 ## 7. Menguji DNS dari Ubuntu Server
@@ -135,8 +143,8 @@ Pastikan status layanan menunjukkan `active (running)`.
 Jalankan perintah berikut untuk menguji domain utama dan subdomain `www` melalui DNS lokal:
 
 ```bash
-dig @127.0.0.1 ukomtkj-4.sch.id
-dig @127.0.0.1 www.ukomtkj-4.sch.id
+dig @127.0.0.1 ukom12tkja-4.sch.id
+dig @127.0.0.1 www.ukom12tkja-4.sch.id
 ```
 
 Periksa bagian jawaban (`ANSWER SECTION`) dan pastikan alamat yang muncul mengarah ke IP Ubuntu Server, yaitu `10.10.4.3` pada contoh ini.
@@ -152,8 +160,8 @@ ipconfig /flushdns
 Kemudian periksa hasil resolusi domain:
 
 ```cmd
-nslookup ukomtkj-4.sch.id
-nslookup www.ukomtkj-4.sch.id
+nslookup ukom12tkja-4.sch.id
+nslookup www.ukom12tkja-4.sch.id
 ```
 
 Pastikan hasilnya mengarah ke IP Ubuntu Server. Komputer client juga harus menggunakan DNS server yang benar, yaitu IP Ubuntu Server (`10.10.25.3` pada contoh ini). Jika DNS yang digunakan client masih mengarah ke alamat lain, hasil `nslookup` tanpa menyebut server DNS tertentu bisa berbeda.
