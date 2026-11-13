@@ -148,6 +148,6 @@ EXIT;
 
 ## Catatan penting
 
-- Pastikan nama database konsisten menggunakan `ukom25`. Pada catatan awal terdapat `USE ukom26;`; langkah tersebut perlu menggunakan `USE ukom25;` agar sesuai dengan database yang dibuat.
+- Pastikan nama database konsisten menggunakan `ukom4`. Pada catatan awal terdapat `USE ukom4;`; langkah tersebut perlu menggunakan `USE ukom4;` agar sesuai dengan database yang dibuat.
 - Ganti teks `Ubuntu Server (ip ubuntu)` dengan alamat IP Ubuntu Server yang benar jika ingin menyimpan IP server pada data tabel.
 - Password di atas mengikuti catatan konfigurasi yang diberikan. Jika repository GitHub akan dibuat **Public**, jangan cantumkan password asli dalam dokumentasi. Ganti dengan placeholder seperti `<PASSWORD_DATABASE>` sebelum dipublikasikan.
