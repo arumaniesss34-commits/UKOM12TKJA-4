@@ -22,12 +22,12 @@ Oleh karena itu, diperlukan perbaikan pada konfigurasi Forward Zone dan Reverse 
 |---|---|
 | Sistem Operasi Server | Ubuntu Server |
 | DNS Software | BIND9 |
-| Domain | ukom12tkj-4.sch.id |
+| Domain | ukom12tkja-4.sch.id |
 | IP DNS Server | 10.10.4.3 |
 | Network | 10.10.4.0/24 |
-| Forward Zone | ukom12tkj-4.sch.id |
+| Forward Zone | ukom12tkja-4.sch.id |
 | Reverse Zone | 4.10.10.in-addr.arpa |
-| File Forward Zone | /etc/bind/db.ukom12tkj-4 |
+| File Forward Zone | /etc/bind/db.ukom12tkja-4.sch.id |
 | File Reverse Zone | /etc/bind/db.10.10.4 |
 
 ---
@@ -47,9 +47,9 @@ sudo nano /etc/bind/named.conf.local
 Pastikan konfigurasi di dalamnya sudah sesuai:
 
 ```conf
-zone "ukom12tkj-4.sch.id" {
+zone "ukom12tkja-4.sch.id" {
     type master;
-    file "/etc/bind/db.ukom12tkj-4";
+    file "/etc/bind/db.ukom12tkja-4";
 };
 
 zone "4.10.10.in-addr.arpa" {
@@ -76,14 +76,14 @@ Simpan perubahan dengan menekan `CTRL + O`, Enter, kemudian `CTRL + X`.
 Buka file Forward Zone:
 
 ```bash
-sudo nano /etc/bind/db.ukom12tkj-4
+sudo nano /etc/bind/db.ukom12tkja-4
 ```
 
 Sesuaikan konfigurasi menjadi:
 
 ```dns
 $TTL 604800
-@   IN  SOA ukom12tkj-4.sch.id. root.ukom12tkj-4.sch.id. (
+@   IN  SOA ukom12tkja-4.sch.id. root.ukom12tkja-4.sch.id. (
         2026111201
         604800
         86400
@@ -91,7 +91,7 @@ $TTL 604800
         604800
 )
 
-@       IN  NS  ukom12tkj-4.sch.id.
+@       IN  NS  ukom12tkja-4.sch.id.
 @       IN  A   10.10.4.3
 www     IN  A   10.10.4.3
 ```
@@ -104,7 +104,7 @@ Konfigurasi Forward Zone berfungsi menghubungkan nama domain dengan alamat IP DN
 - `NS` menentukan DNS Server yang bertanggung jawab terhadap zona.
 - `A` digunakan untuk menghubungkan nama domain dengan alamat IPv4.
 - `@` mewakili nama domain utama.
-- `www` merupakan subdomain yang dapat diakses melalui nama `www.ukom12tkj-4.sch.id`.
+- `www` merupakan subdomain yang dapat diakses melalui nama `www.ukom12tkja-4.sch.id`.
 - Serial '2026111201' merupakan nomor versi zona. Setiap kali mengubah isi file zona, naikkan serialnya agar perubahan dapat dikenali oleh DNS.
 
 Dengan konfigurasi tersebut, domain utama dan subdomain www akan diarahkan ke alamat IP `10.10.4.3`.
@@ -123,7 +123,7 @@ Sesuaikan konfigurasi menjadi:
 
 ```dns
 $TTL 604800
-@   IN  SOA ukom12tkj-4.sch.id. root.ukom12tkj-4.sch.id. (
+@   IN  SOA ukom12tkja-4.sch.id. root.ukom12tkja-4.sch.id. (
         2026111201
         604800
         86400
@@ -131,8 +131,8 @@ $TTL 604800
         604800
 )
 
-@   IN  NS  ukom12tkj-4.sch.id.
-3   IN  PTR ukom12tkj-4.sch.id.
+@   IN  NS  ukom12tkja-4.sch.id.
+3   IN  PTR ukom12tkja-4.sch.id.
 ```
 
 **Penjelasan:**
@@ -142,7 +142,7 @@ Reverse Zone merupakan bagian terpenting dalam penanganan status `Server: Unknow
 Perhatikan baris berikut:
 
 ```dns
-3   IN  PTR ukom12tkj-4.sch.id.
+3   IN  PTR ukom12tkja-4.sch.id.
 ```
 
 Angka `3` merupakan oktet terakhir dari alamat IP `10.10.4.3`.
@@ -153,7 +153,7 @@ Sementara itu, nama zona `4.10.10.in-addr.arpa` sudah mewakili tiga oktet sebelu
 3.4.10.10.in-addr.arpa
 ```
 
-PTR Record tersebut akan memberikan nama `ukom12tkj-4.sch.id` ketika komputer melakukan pencarian Reverse DNS terhadap IP `10.10.4.3`.
+PTR Record tersebut akan memberikan nama `ukom12tkja-4.sch.id` ketika komputer melakukan pencarian Reverse DNS terhadap IP `10.10.4.3`.
 
 Simpan konfigurasi dengan `CTRL + O`, Enter, kemudian `CTRL + X`.
 
@@ -176,13 +176,13 @@ Jika tidak terdapat kesalahan, terminal akan kembali ke prompt tanpa menampilkan
 **B. Memeriksa Forward Zone**
 
 ```bash
-sudo named-checkzone ukom12tkj-4.sch.id /etc/bind/db.ukom12tkj-4
+sudo named-checkzone ukom12tkja-4.sch.id /etc/bind/db.ukom12tkja-4
 ```
 
 Hasil yang diharapkan:
 
 ```text
-zone ukom12tkj-4.sch.id/IN: loaded serial 2026111201
+zone ukom12tkja-4.sch.id/IN: loaded serial 2026111201
 OK
 ```
 
@@ -296,16 +296,16 @@ Setelah seluruh konfigurasi selesai, lakukan pengujian menggunakan perintah `nsl
 Jalankan:
 
 ```cmd
-nslookup ukom12tkj-4.sch.id 10.10.4.3
+nslookup ukom12tkja-4.sch.id 10.10.4.3
 ```
 
 Hasil yang diharapkan:
 
 ```text
-Server:  ukom12tkj-4.sch.id
+Server:  ukom12tkja-4.sch.id
 Address: 10.10.4.3
 
-Name:    ukom12tkj-4.sch.id
+Name:    ukom12tkja-4.sch.id
 Address: 10.10.4.3
 ```
 
@@ -316,16 +316,16 @@ Pengujian ini memastikan DNS Server dapat memberikan jawaban terhadap permintaan
 Setelah pengujian pertama berhasil, jalankan:
 
 ```cmd
-nslookup ukom12tkj-4.sch.id
+nslookup ukom12tkja-4.sch.id
 ```
 
 Hasil yang diharapkan:
 
 ```text
-Server:  ukom12tkj-4.sch.id
+Server:  ukom12tkja-4.sch.id
 Address: 10.10.4.3
 
-Name:    ukom12tkj-4.sch.id
+Name:    ukom12tkja-4.sch.id
 Address: 10.10.4.3
 ```
 
@@ -376,7 +376,7 @@ dig @127.0.0.1 -x 10.10.4.3
 Pastikan hasil PTR mengarah ke:
 
 ```text
-ukom12tkj-4.sch.id.
+ukom12tkja-4.sch.id.
 ```
 
 Jika hasilnya belum sesuai, buka kembali file Reverse Zone:
@@ -388,7 +388,7 @@ sudo nano /etc/bind/db.10.10.4
 Pastikan terdapat konfigurasi:
 
 ```dns
-3 IN PTR ukom12tkj-4.sch.id.
+3 IN PTR ukom12tkja-4.sch.id.
 ```
 
 Setelah diperbaiki, naikkan serial SOA, periksa zona kembali, kemudian restart BIND9.
@@ -498,7 +498,7 @@ sudo named-checkconf
 Periksa Forward Zone:
 
 ```bash
-sudo named-checkzone ukom12tkj-4.sch.id /etc/bind/db.ukom12tkj-4
+sudo named-checkzone ukom12tkja-4.sch.id /etc/bind/db.ukom12tkja-4
 ```
 
 Periksa Reverse Zone:
@@ -593,7 +593,7 @@ Selain itu, konfigurasi Forward DNS harus dipastikan berjalan dengan benar agar 
 Setelah seluruh tahapan perbaikan berhasil dilakukan, pengujian dapat dilanjutkan menggunakan perintah:
 
 ```cmd
-nslookup ukom12tkj-4.sch.id
+nslookup ukom12tkja-4.sch.id
 ```
 
 Hasil yang diharapkan adalah bagian `Server` menampilkan nama domain DNS Server, bukan lagi `Unknown`, serta bagian `Address` menunjukkan alamat IP `10.10.4.3`.
