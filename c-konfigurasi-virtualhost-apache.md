@@ -7,15 +7,15 @@ Bagian ini digunakan untuk menghubungkan konfigurasi website dengan domain yang 
 Jalankan perintah berikut:
 
 ```bash
-sudo nano /etc/apache2/sites-available/ukomtkj-4.sch.id.conf
+sudo nano /etc/apache2/sites-available/ukom12tkja-4.sch.id.conf
 ```
 
 Masukkan konfigurasi VirtualHost berikut ke dalam file tersebut:
 
 ```apache
 <VirtualHost *:80>
-    ServerName ukomtkj-4.sch.id
-    ServerAlias www.ukomtkj-4.sch.id
+    ServerName ukom12tkja-4.sch.id
+    ServerAlias www.ukom12tkja-4.sch.id
 
     DocumentRoot /var/www/html
     DirectoryIndex index.html index.php
@@ -38,7 +38,7 @@ Simpan file dengan `Ctrl + O`, tekan `Enter`, lalu keluar dengan `Ctrl + X`.
 Jalankan perintah berikut untuk mengaktifkan konfigurasi website:
 
 ```bash
-sudo a2ensite ukomtkj-4.sch.id.conf
+sudo a2ensite ukom12tkja-4.sch.id.conf
 ```
 
 ## 3. Memeriksa konfigurasi Apache
@@ -67,6 +67,6 @@ sudo systemctl reload apache2
 
 ## 5. Pengujian
 
-Pastikan domain `ukomtkj-4.sch.id` diarahkan ke IP Ubuntu Server melalui konfigurasi DNS yang sesuai. Setelah itu, akses domain melalui browser client yang dapat menjangkau server.
+Pastikan domain `ukom12tkja-4.sch.id` diarahkan ke IP Ubuntu Server melalui konfigurasi DNS yang sesuai. Setelah itu, akses domain melalui browser client yang dapat menjangkau server.
 
-**Catatan:** domain pada bagian ini mengikuti catatan yang kamu kirim, yaitu `ukomtkj-4.sch.id`. Pastikan penulisan domain sama dengan konfigurasi DNS dan ketentuan penguji. Jika IP server atau nama domain yang ditetapkan berbeda, sesuaikan sebelum pengujian.
+**Catatan:** domain pada bagian ini mengikuti catatan yang kamu kirim, yaitu `ukom12tkja-4.sch.id`. Pastikan penulisan domain sama dengan konfigurasi DNS dan ketentuan penguji. Jika IP server atau nama domain yang ditetapkan berbeda, sesuaikan sebelum pengujian.
