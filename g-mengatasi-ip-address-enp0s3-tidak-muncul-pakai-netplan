@@ -1,0 +1,559 @@
+
+# Mengatasi IP Address enp0s3 Tidak Muncul pada Ubuntu Server Menggunakan Netplan
+
+## 1. Pendahuluan
+
+Pada saat melakukan konfigurasi jaringan Ubuntu Server, terkadang IP Address pada interface `enp0s3` tidak muncul ketika dilakukan pemeriksaan menggunakan perintah `ip a`. Kondisi ini dapat menyebabkan server tidak dapat berkomunikasi dengan perangkat lain dalam jaringan, bahkan menghambat proses remote access menggunakan SSH dari perangkat client.
+
+Salah satu penyebabnya adalah konfigurasi jaringan pada Netplan yang belum sesuai atau belum diterapkan dengan benar. Netplan merupakan utilitas pada Ubuntu yang digunakan untuk mengatur konfigurasi jaringan, seperti penggunaan DHCP, Static IP Address, gateway, dan DNS Server.
+
+Untuk mengatasi permasalahan tersebut, konfigurasi jaringan dapat diperiksa dan disesuaikan melalui file konfigurasi Netplan. Pada dokumentasi ini, konfigurasi dilakukan dengan menggunakan Static IP Address agar server memiliki alamat IP yang tetap dan dapat diakses oleh perangkat client melalui jaringan.
+
+## 2. Identifikasi Permasalahan
+
+Langkah pertama adalah memeriksa kondisi interface jaringan pada Ubuntu Server untuk mengetahui apakah interface `enp0s3` sudah mendapatkan IP Address atau belum.
+
+Jalankan perintah berikut:
+
+```bash
+ip a
+```
+
+Perintah `ip a` merupakan singkatan dari `ip address` yang digunakan untuk menampilkan informasi seluruh interface jaringan pada sistem Linux. Informasi yang ditampilkan meliputi nama interface, MAC Address, status interface, IPv4 Address, dan IPv6 Address.
+
+Pada kondisi normal, interface `enp0s3` seharusnya menampilkan informasi IP Address pada bagian `inet`.
+
+Contoh:
+
+```bash
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP>
+    link/ether 08:00:27:b0:22:13
+    inet 100.100.4.2/30
+```
+
+Apabila bagian `inet` belum menampilkan IP Address IPv4, berarti interface belum mendapatkan konfigurasi IP yang dapat digunakan.
+
+Oleh karena itu, perlu dilakukan pemeriksaan dan perbaikan konfigurasi jaringan melalui Netplan.
+
+## 3. Berpindah ke User Root
+
+Sebelum melakukan perubahan konfigurasi jaringan, masuk terlebih dahulu ke akun root agar proses konfigurasi dapat dilakukan dengan hak akses administrator.
+
+Jalankan perintah:
+
+```bash
+sudo su
+```
+
+**Penjelasan:**
+
+- `sudo` digunakan untuk menjalankan perintah dengan hak akses administrator.
+- `su` merupakan singkatan dari Substitute User yang digunakan untuk berpindah ke akun pengguna lain.
+- Apabila tidak menyebutkan nama pengguna, perintah tersebut secara default akan berpindah ke akun root.
+
+Setelah menjalankan perintah tersebut, sistem akan meminta password dari pengguna yang sedang digunakan.
+
+Apabila berhasil, tampilan terminal akan berubah dari:
+
+```bash
+arum@arum:~$
+```
+
+Menjadi:
+
+```bash
+root@arum:/home/arum#
+```
+
+Perubahan tersebut menandakan bahwa pengguna sudah berada pada akun root dan dapat melakukan konfigurasi sistem.
+
+## 4. Memeriksa dan Mengubah Konfigurasi Netplan
+
+Setelah berhasil masuk sebagai root, langkah berikutnya adalah membuka file konfigurasi Netplan.
+
+Pada Ubuntu Server, file konfigurasi jaringan biasanya berada di direktori `/etc/netplan/`.
+
+Untuk membuka file konfigurasi yang digunakan pada percobaan ini, jalankan perintah:
+
+```bash
+sudo nano /etc/netplan/50-cloud-init.yaml
+```
+
+**Penjelasan:**
+
+- `sudo` digunakan untuk memperoleh hak akses administrator.
+- `nano` merupakan text editor berbasis terminal yang digunakan untuk membuka dan mengubah isi file.
+- `/etc/netplan/` merupakan direktori tempat penyimpanan konfigurasi Netplan.
+- `50-cloud-init.yaml` merupakan nama file konfigurasi jaringan yang digunakan pada Ubuntu Server.
+
+Perlu diperhatikan bahwa perintah tersebut digunakan untuk membuka file konfigurasi agar dapat diedit, bukan untuk menjalankan file YAML.
+
+### 4.1 Memeriksa Konfigurasi DHCP
+
+Setelah file terbuka, periksa konfigurasi yang terdapat di dalamnya.
+
+Contoh konfigurasi awal:
+
+```yaml
+network:
+    version: 2
+    ethernets:
+        enp0s3:
+            dhcp4: true
+```
+
+**Penjelasan:**
+
+- `network:` merupakan bagian utama yang menandakan bahwa file tersebut berisi konfigurasi jaringan.
+- `version: 2` menunjukkan versi format konfigurasi Netplan yang digunakan.
+- `ethernets:` digunakan untuk mengatur konfigurasi interface jaringan Ethernet.
+- `enp0s3:` merupakan nama interface jaringan yang akan dikonfigurasi.
+- `dhcp4: true` menunjukkan bahwa interface menggunakan DHCP untuk mendapatkan IP Address IPv4 secara otomatis dari DHCP Server.
+
+Apabila ingin menggunakan IP Address statis, konfigurasi DHCP perlu diubah menjadi `false`.
+
+### 4.2 Mengubah Konfigurasi Menjadi Static IP
+
+Hapus atau sesuaikan konfigurasi sebelumnya, kemudian masukkan konfigurasi berikut:
+
+```yaml
+network:
+    version: 2
+    ethernets:
+        enp0s3:
+            dhcp4: false
+            addresses:
+                - 100.100.4.2/30
+            routes:
+                - to: default
+                  via: 100.100.4.1
+            nameservers:
+                addresses:
+                    - 8.8.8.8
+                    - 1.1.1.1
+```
+
+**Penjelasan setiap konfigurasi:**
+
+**1. `dhcp4: false`**
+
+Digunakan untuk menonaktifkan DHCP IPv4 pada interface `enp0s3`. Dengan demikian, sistem tidak lagi meminta IP Address secara otomatis dari DHCP Server, melainkan menggunakan IP Address yang ditentukan secara manual.
+
+**2. `addresses: - 100.100.4.2/30`**
+
+Digunakan untuk menentukan IP Address statis yang akan diberikan kepada interface `enp0s3`.
+
+Keterangan:
+- `100.100.4.2` merupakan IP Address yang diberikan kepada Ubuntu Server.
+- `/30` merupakan prefix yang menunjukkan subnet mask `255.255.255.252`.
+
+Pada subnet `/30`, terdapat empat alamat IP, yaitu:
+- Network Address: `100.100.4.0`
+- Host pertama: `100.100.4.1`
+- Host kedua: `100.100.4.2`
+- Broadcast Address: `100.100.4.3`
+
+Dengan demikian, IP `100.100.4.2` dapat digunakan sebagai alamat server, sedangkan `100.100.4.1` digunakan sebagai gateway sesuai dengan topologi jaringan.
+
+**3. `routes:`**
+
+Bagian ini digunakan untuk menentukan jalur routing yang akan digunakan oleh Ubuntu Server ketika mengirimkan paket data menuju jaringan lain.
+
+**4. `to: default`**
+
+Menunjukkan bahwa routing yang dikonfigurasi merupakan default route. Artinya, jalur tersebut akan digunakan ketika tujuan komunikasi tidak ditemukan pada routing yang lebih spesifik.
+
+**5. `via: 100.100.4.1`**
+
+Menentukan alamat IP gateway yang digunakan sebagai jalur keluar menuju jaringan lain atau internet.
+
+Gateway berfungsi meneruskan paket data dari Ubuntu Server menuju jaringan tujuan yang berbeda.
+
+**6. `nameservers:`**
+
+Digunakan untuk menentukan DNS Server yang bertugas menerjemahkan nama domain menjadi IP Address.
+
+**7. `addresses: - 8.8.8.8 - 1.1.1.1`**
+
+Merupakan daftar DNS Server yang digunakan oleh Ubuntu Server.
+
+Keterangan:
+- `8.8.8.8` merupakan DNS Server publik milik Google.
+- `1.1.1.1` merupakan DNS Server publik milik Cloudflare.
+
+DNS diperlukan agar Ubuntu Server dapat menerjemahkan nama domain, seperti `google.com`, menjadi alamat IP yang sesuai.
+
+**Catatan:** IP Address, prefix, dan gateway harus disesuaikan dengan topologi jaringan yang digunakan. Jangan menggunakan konfigurasi tersebut secara langsung apabila alamat jaringan pada perangkat berbeda.
+
+### 4.3 Menyimpan Konfigurasi
+
+Setelah seluruh konfigurasi selesai dimasukkan, simpan file menggunakan kombinasi tombol berikut:
+
+1. Tekan `Ctrl + O` untuk menyimpan perubahan.
+2. Tekan `Enter` untuk mengonfirmasi nama file.
+3. Tekan `Ctrl + X` untuk keluar dari text editor Nano.
+
+Pastikan konfigurasi sudah tersimpan sebelum melanjutkan ke tahap berikutnya.
+
+## 5. Menerapkan Konfigurasi Netplan
+
+Setelah file konfigurasi selesai diperbarui, langkah berikutnya adalah menerapkan perubahan agar konfigurasi jaringan dapat digunakan oleh sistem.
+
+Sebelum menerapkannya, jalankan perintah:
+
+```bash
+sudo netplan generate
+```
+
+**Penjelasan:**
+
+Perintah `netplan generate` digunakan untuk memeriksa dan menghasilkan konfigurasi jaringan berdasarkan file YAML yang tersedia.
+
+Perintah ini membantu mengetahui apakah terdapat kesalahan penulisan konfigurasi, seperti kesalahan indentasi, format YAML, atau parameter yang tidak sesuai.
+
+Apabila tidak muncul pesan kesalahan, lanjutkan dengan menerapkan konfigurasi:
+
+```bash
+sudo netplan apply
+```
+
+**Penjelasan:**
+
+Perintah `netplan apply` digunakan untuk menerapkan seluruh konfigurasi Netplan ke sistem jaringan Ubuntu Server.
+
+Konfigurasi yang sebelumnya sudah dibuat, seperti Static IP Address, gateway, dan DNS Server, akan diaktifkan pada interface yang telah ditentukan.
+
+Perlu diperhatikan bahwa proses penerapan konfigurasi dapat menyebabkan koneksi jaringan terputus sementara, terutama apabila perubahan dilakukan pada interface yang sedang digunakan untuk mengakses server.
+
+## 6. Mengatur Hak Akses File Konfigurasi
+
+Setelah konfigurasi diterapkan, atur hak akses file Netplan menggunakan perintah:
+
+```bash
+sudo chmod 600 /etc/netplan/50-cloud-init.yaml
+```
+
+**Penjelasan:**
+
+- `sudo` digunakan untuk menjalankan perintah dengan hak akses administrator.
+- `chmod` merupakan singkatan dari Change Mode yang digunakan untuk mengubah hak akses suatu file.
+- `600` menunjukkan bahwa pemilik file memiliki hak membaca dan menulis, sedangkan pengguna lain tidak memiliki hak akses.
+- `/etc/netplan/50-cloud-init.yaml` merupakan lokasi file konfigurasi yang hak aksesnya akan diubah.
+
+Pengaturan ini bertujuan untuk membatasi akses terhadap file konfigurasi jaringan sehingga hanya pemilik file yang dapat membaca dan mengubah isinya.
+
+## 7. Memastikan IP Address Sudah Muncul
+
+Setelah konfigurasi Netplan diterapkan, lakukan pemeriksaan kembali untuk memastikan IP Address sudah berhasil diberikan kepada interface `enp0s3`.
+
+Jalankan perintah:
+
+```bash
+ip a
+```
+
+Periksa bagian interface `enp0s3`.
+
+Apabila konfigurasi berhasil, akan muncul informasi seperti berikut:
+
+```bash
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP>
+    link/ether 08:00:27:b0:22:13
+    inet 100.100.4.2/30 brd 100.100.4.3
+```
+
+**Penjelasan:**
+
+- `enp0s3` menunjukkan nama interface jaringan.
+- `UP` menunjukkan bahwa interface telah diaktifkan.
+- `LOWER_UP` menunjukkan bahwa koneksi pada lapisan fisik atau virtual interface terdeteksi aktif.
+- `inet 100.100.4.2/30` menunjukkan bahwa interface sudah memiliki IP Address IPv4 sesuai konfigurasi.
+- `brd 100.100.4.3` menunjukkan alamat broadcast dari jaringan tersebut.
+
+Apabila IP Address sudah muncul, berarti konfigurasi Static IP berhasil diterapkan pada interface `enp0s3`.
+
+## 8. Melakukan Pengujian Koneksi Jaringan
+
+Setelah IP Address berhasil dikonfigurasi, langkah selanjutnya adalah melakukan pengujian konektivitas untuk memastikan Ubuntu Server dapat berkomunikasi dengan jaringan luar.
+
+Pengujian dilakukan menggunakan perintah `ping`.
+
+### 8.1 Pengujian Menggunakan ping google.com
+
+Jalankan perintah berikut:
+
+```bash
+ping google.com
+```
+
+**Penjelasan:**
+
+Perintah `ping` digunakan untuk menguji konektivitas jaringan dengan mengirimkan paket ICMP Echo Request menuju alamat tujuan.
+
+Pada pengujian ini, tujuan yang digunakan adalah `google.com`.
+
+Pengujian menggunakan nama domain bertujuan untuk memastikan bahwa:
+- Ubuntu Server dapat mengakses jaringan tujuan.
+- DNS Server dapat menerjemahkan nama domain menjadi IP Address.
+- Paket ICMP dapat dikirimkan dan mendapatkan balasan dari tujuan.
+
+Apabila koneksi berhasil, akan muncul respons seperti berikut:
+
+```bash
+PING google.com (142.250.4.138) 56(84) bytes of data.
+64 bytes from 142.250.4.138: icmp_seq=1 ttl=106 time=15.9 ms
+64 bytes from 142.250.4.138: icmp_seq=2 ttl=106 time=16.3 ms
+```
+
+Keterangan:
+- `PING google.com` menunjukkan alamat tujuan pengujian.
+- `142.250.4.138` merupakan IP Address yang diperoleh dari proses penerjemahan DNS.
+- `icmp_seq` menunjukkan urutan paket ICMP yang dikirimkan.
+- `ttl` menunjukkan nilai Time To Live pada paket.
+- `time` menunjukkan waktu yang dibutuhkan paket untuk mendapatkan balasan dalam satuan milidetik.
+
+Apabila muncul balasan seperti contoh tersebut, berarti koneksi menuju domain Google berhasil dan DNS dapat bekerja.
+
+Untuk menghentikan proses ping, tekan:
+
+```bash
+Ctrl + C
+```
+
+Setelah dihentikan, sistem akan menampilkan statistik pengujian yang berisi jumlah paket terkirim, paket diterima, dan persentase packet loss.
+
+### 8.2 Pengujian Menggunakan ping 8.8.8.8
+
+Pengujian selanjutnya dilakukan menggunakan alamat IP publik Google DNS secara langsung.
+
+Jalankan perintah:
+
+```bash
+ping 8.8.8.8
+```
+
+**Penjelasan:**
+
+Berbeda dengan pengujian sebelumnya, pengujian ini menggunakan IP Address secara langsung tanpa melibatkan proses penerjemahan nama domain melalui DNS.
+
+Tujuannya adalah untuk memastikan bahwa Ubuntu Server dapat melakukan komunikasi menggunakan alamat IP menuju jaringan luar.
+
+Pengujian ini membantu membedakan permasalahan konektivitas jaringan dengan permasalahan DNS.
+
+Apabila berhasil, akan muncul respons seperti berikut:
+
+```bash
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=20.5 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time=19.8 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=117 time=21.2 ms
+```
+
+Keterangan:
+- `8.8.8.8` merupakan alamat IP DNS Server publik Google.
+- `icmp_seq` menunjukkan urutan paket ICMP yang dikirimkan.
+- `ttl` menunjukkan nilai Time To Live.
+- `time` menunjukkan waktu respons dari alamat tujuan.
+
+Apabila Ubuntu Server mendapatkan balasan dari `8.8.8.8`, berarti komunikasi IP menuju jaringan luar berhasil.
+
+Untuk menghentikan pengujian, tekan `Ctrl + C`.
+
+**Kesimpulan pengujian:**
+
+Penggunaan kedua perintah tersebut memiliki tujuan yang berbeda:
+
+| Perintah | Fungsi Pengujian |
+|---|---|
+| `ping google.com` | Menguji konektivitas jaringan sekaligus memastikan DNS dapat menerjemahkan nama domain. |
+| `ping 8.8.8.8` | Menguji konektivitas menggunakan IP Address secara langsung tanpa bergantung pada penerjemahan DNS. |
+
+Apabila kedua pengujian berhasil, dapat disimpulkan bahwa Ubuntu Server sudah memiliki konektivitas jaringan menuju tujuan pengujian.
+
+Namun, keberhasilan kedua pengujian tersebut belum otomatis membuktikan bahwa perangkat client dapat mengakses server melalui SSH. Oleh karena itu, perlu dilakukan pengujian SSH secara langsung.
+
+## 9. Memastikan Layanan SSH pada Ubuntu Server
+
+Sebelum melakukan remote access dari perangkat client, pastikan layanan SSH sudah terpasang dan berjalan pada Ubuntu Server.
+
+Periksa status layanan SSH menggunakan perintah:
+
+```bash
+sudo systemctl status ssh
+```
+
+**Penjelasan:**
+
+- `systemctl` digunakan untuk mengelola dan memeriksa layanan atau service pada sistem Linux.
+- `status` digunakan untuk melihat kondisi layanan.
+- `ssh` merupakan nama layanan Secure Shell yang digunakan untuk remote access.
+
+Apabila layanan SSH sudah berjalan, akan muncul informasi:
+
+```bash
+Active: active (running)
+```
+
+Keterangan tersebut menunjukkan bahwa layanan SSH sedang aktif dan dapat menerima koneksi apabila konfigurasi jaringan serta firewall mengizinkannya.
+
+Apabila layanan SSH belum terpasang, instal terlebih dahulu menggunakan perintah:
+
+```bash
+sudo apt update
+```
+
+Perintah tersebut digunakan untuk memperbarui daftar paket yang tersedia pada repository Ubuntu.
+
+Selanjutnya jalankan:
+
+```bash
+sudo apt install openssh-server -y
+```
+
+Perintah tersebut digunakan untuk memasang paket OpenSSH Server agar Ubuntu dapat menerima koneksi SSH dari perangkat lain.
+
+Setelah instalasi selesai, aktifkan layanan SSH menggunakan perintah:
+
+```bash
+sudo systemctl enable --now ssh
+```
+
+Perintah tersebut memiliki dua fungsi:
+- `enable` digunakan agar layanan SSH otomatis aktif ketika sistem dinyalakan.
+- `--now` digunakan untuk langsung menjalankan layanan SSH tanpa harus menunggu proses restart.
+
+Kemudian periksa kembali status layanan:
+
+```bash
+sudo systemctl status ssh
+```
+
+Pastikan statusnya sudah menunjukkan `active (running)`.
+
+## 10. Memastikan Port SSH Sudah Listening
+
+Untuk memastikan layanan SSH sudah membuka port komunikasi, jalankan perintah:
+
+```bash
+sudo ss -tlnp | grep :22
+```
+
+**Penjelasan:**
+
+- `ss` digunakan untuk menampilkan informasi socket dan koneksi jaringan.
+- `-t` menampilkan koneksi TCP.
+- `-l` menampilkan port yang sedang berada dalam kondisi listening.
+- `-n` menampilkan nomor port secara numerik.
+- `-p` menampilkan informasi proses yang menggunakan port tersebut.
+- `grep :22` digunakan untuk menyaring informasi yang berkaitan dengan port 22.
+
+Port 22 merupakan port default yang digunakan oleh layanan SSH.
+
+Apabila layanan SSH sudah berjalan dan membuka port tersebut, akan muncul informasi yang menunjukkan bahwa port 22 berada dalam kondisi LISTEN.
+
+## 11. Mengizinkan Koneksi SSH Melalui Firewall
+
+Apabila Ubuntu Server menggunakan UFW sebagai firewall, pastikan koneksi SSH sudah diizinkan.
+
+Periksa status firewall menggunakan perintah:
+
+```bash
+sudo ufw status
+```
+
+Apabila UFW aktif dan koneksi SSH belum diizinkan, jalankan:
+
+```bash
+sudo ufw allow OpenSSH
+```
+
+Perintah tersebut digunakan untuk menambahkan aturan firewall yang mengizinkan koneksi masuk melalui layanan OpenSSH, yang secara default menggunakan TCP port 22.
+
+Periksa kembali aturan firewall:
+
+```bash
+sudo ufw status
+```
+
+Pastikan aturan OpenSSH sudah muncul.
+
+Catatan: Jika UFW tidak aktif, tidak perlu mengaktifkannya hanya untuk pengujian SSH. Pastikan juga firewall lain atau pengaturan jaringan virtual tidak memblokir koneksi.
+
+## 12. Pengujian Koneksi dari Perangkat Client
+
+Setelah IP Address Ubuntu Server berhasil dikonfigurasi, konektivitas jaringan sudah diuji, dan layanan SSH dipastikan berjalan, langkah selanjutnya adalah melakukan pengujian dari perangkat client.
+
+Pengujian ini bertujuan untuk memastikan bahwa perangkat client dapat menjangkau Ubuntu Server dan melakukan remote access menggunakan protokol SSH.
+
+### 12.1 Menguji Konektivitas Client ke Server
+
+Buka Command Prompt pada perangkat client Windows.
+
+Kemudian jalankan perintah:
+
+```bash
+ping 100.100.4.2
+```
+
+**Penjelasan:**
+
+Perintah tersebut digunakan untuk menguji konektivitas dari perangkat client menuju IP Address Ubuntu Server.
+
+Apabila muncul balasan seperti berikut:
+
+```bash
+Reply from 100.100.4.2: bytes=32 time<1ms TTL=64
+```
+
+Berarti perangkat client berhasil menjangkau Ubuntu Server melalui jaringan.
+
+Namun, apabila tidak mendapatkan balasan, periksa kembali konfigurasi IP Address, subnet mask, gateway, dan koneksi jaringan antara client dengan server.
+
+Pastikan juga kedua perangkat berada dalam jaringan yang saling terhubung. Apabila menggunakan VirtualBox, periksa pengaturan Network Adapter agar mode jaringan dan koneksinya sesuai dengan topologi yang digunakan.
+
+### 12.2 Melakukan Remote Access Menggunakan SSH
+
+Setelah pengujian ping dari perangkat client berhasil, lakukan koneksi SSH menggunakan perintah:
+
+```bash
+ssh arum@100.100.4.2
+```
+
+**Penjelasan:**
+
+- `ssh` merupakan perintah untuk melakukan koneksi Secure Shell menuju perangkat lain.
+- `arum` merupakan username yang digunakan untuk login ke Ubuntu Server.
+- `@` merupakan pemisah antara username dan alamat IP tujuan.
+- `100.100.4.2` merupakan IP Address Ubuntu Server yang akan diakses.
+
+Setelah perintah dijalankan, sistem mungkin menampilkan konfirmasi identitas host pada koneksi pertama.
+
+Apabila muncul pertanyaan:
+
+```bash
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+Ketik:
+
+```bash
+yes
+```
+
+Selanjutnya masukkan password akun Ubuntu Server yang digunakan.
+
+Apabila autentikasi berhasil, perangkat client akan masuk ke terminal Ubuntu Server melalui koneksi SSH.
+
+Dengan demikian, perangkat client sudah berhasil melakukan remote access terhadap Ubuntu Server.
+
+## 13. Kesimpulan
+
+Berdasarkan tahapan konfigurasi dan pengujian yang telah dilakukan, permasalahan IP Address pada interface `enp0s3` yang sebelumnya tidak muncul dapat diatasi dengan melakukan pemeriksaan dan perubahan konfigurasi jaringan melalui Netplan.
+
+Pengaturan Static IP Address dilakukan dengan menentukan alamat IP, prefix, default gateway, serta DNS Server secara manual. Setelah konfigurasi diterapkan menggunakan `netplan apply`, pemeriksaan kembali melalui perintah `ip a` dilakukan untuk memastikan IP Address sudah berhasil terpasang pada interface jaringan.
+
+Selanjutnya, pengujian menggunakan `ping google.com` dilakukan untuk memastikan konektivitas jaringan sekaligus fungsi DNS, sedangkan `ping 8.8.8.8` digunakan untuk memastikan komunikasi IP menuju jaringan luar tanpa bergantung pada proses penerjemahan nama domain.
+
+Tahap terakhir adalah memastikan layanan SSH berjalan, port 22 dalam kondisi listening, serta firewall mengizinkan koneksi SSH. Pengujian dilanjutkan dari perangkat client menggunakan perintah `ping` menuju IP Address server dan melakukan remote access menggunakan SSH.
+
+Apabila seluruh tahapan pengujian berhasil, Ubuntu Server telah memiliki konfigurasi jaringan yang dapat digunakan dan perangkat client dapat melakukan remote access melalui SSH sesuai dengan topologi jaringan yang diterapkan.
