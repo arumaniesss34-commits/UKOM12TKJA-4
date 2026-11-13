@@ -27,7 +27,7 @@ Oleh karena itu, diperlukan perbaikan pada konfigurasi Forward Zone dan Reverse 
 | Network | 10.10.4.0/24 |
 | Forward Zone | ukom12tkja-4.sch.id |
 | Reverse Zone | 4.10.10.in-addr.arpa |
-| File Forward Zone | /etc/bind/db.ukom12tkja-4.sch.id |
+| File Forward Zone | /etc/bind/db.ukom12tkja-4 |
 | File Reverse Zone | /etc/bind/db.10.10.4 |
 
 ---
