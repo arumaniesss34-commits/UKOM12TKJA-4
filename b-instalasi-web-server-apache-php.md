@@ -99,8 +99,8 @@ sudo systemctl restart apache2
 
 Dari browser client yang dapat menjangkau Ubuntu Server, buka alamat berikut:
 
-- `http://ukomtkj-4.sch.id/` — untuk menguji landing page `index.html` melalui domain.
-- `http://ukomtkj-4.sch.id/database.php` — untuk menguji koneksi PHP ke MariaDB dan menampilkan data dari tabel `informasi`.
+- `http://ukom12tkja-4.sch.id/` — untuk menguji landing page `index.html` melalui domain.
+- `http://ukom12tkja-4.sch.id/database.php` — untuk menguji koneksi PHP ke MariaDB dan menampilkan data dari tabel `informasi`.
 - Jika DNS domain belum siap, akses sementara melalui IP server: `http://10.10.4.3/` dan `http://10.10.4.3/database.php`.
 
 Jika halaman landing page tampil dan halaman `database.php` menunjukkan pesan **“Koneksi Database Berhasil”** beserta data informasi, maka Apache, PHP, dan koneksi ke database telah berjalan.
