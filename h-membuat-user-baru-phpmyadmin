@@ -1,0 +1,11 @@
+-- 1. Membuat user baru
+CREATE USER 'arum4'@'localhost' IDENTIFIED BY 'password_kamu';
+
+-- 2. Memberikan hak akses ke database
+GRANT ALL PRIVILEGES ON ukomdb.* TO 'arum4'@'localhost';
+
+-- 3. Memeriksa hak akses
+SHOW GRANTS FOR 'arum4'@'localhost';
+
+-- 4. Keluar dari MariaDB
+EXIT;
