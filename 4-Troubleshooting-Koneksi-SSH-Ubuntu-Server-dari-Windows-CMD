@@ -1,0 +1,368 @@
+# Troubleshooting Koneksi SSH Ubuntu Server dari Windows CMD
+
+## A. Tujuan
+
+Melakukan pemeriksaan dan perbaikan koneksi SSH (Secure Shell) antara komputer client Windows dengan Ubuntu Server 24.04.3 melalui jaringan lokal.
+
+SSH digunakan untuk mengakses dan mengelola Ubuntu Server dari jarak jauh melalui Command Prompt (CMD) Windows tanpa harus berinteraksi langsung dengan terminal server.
+
+Pada konfigurasi ini, Windows bertindak sebagai SSH Client, sedangkan Ubuntu Server bertindak sebagai SSH Server.
+
+## B. Informasi Jaringan
+
+| Perangkat | Keterangan | IP Address |
+|---|---|---|
+| Ubuntu Server | SSH Server | 100.100.4.2 |
+| Windows | SSH Client | Sesuai jaringan client |
+| Interface Server | enp0s3 | 100.100.4.2/30 |
+| Gateway | MikroTik Ether3-SERVER | 100.100.4.1 |
+| Port SSH | TCP | 22 |
+
+Username Ubuntu Server yang digunakan adalah `arum`.
+
+## C. Langkah-Langkah Pengujian Koneksi SSH
+
+### 1. Membuka Command Prompt Windows
+
+1. Nyalakan komputer client Windows.
+2. Tekan tombol `Windows + R`.
+3. Ketik `cmd`.
+4. Tekan Enter untuk membuka Command Prompt.
+5. Pastikan terminal sudah terbuka dan siap digunakan.
+
+### 2. Menghubungkan Windows ke Ubuntu Server melalui SSH
+
+Pada CMD Windows, masukkan perintah:
+
+```bash
+ssh arum@100.100.4.2
+```
+
+Keterangan:
+- `ssh` merupakan perintah untuk menjalankan koneksi Secure Shell.
+- `arum` merupakan username yang digunakan untuk login ke Ubuntu Server.
+- `100.100.4.2` merupakan IP Address Ubuntu Server.
+
+Apabila koneksi berhasil, sistem akan meminta password akun Ubuntu Server.
+
+Namun, dalam pengujian ini muncul pesan kesalahan:
+
+```text
+WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!
+
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+
+Host key verification failed.
+```
+
+Pesan tersebut menunjukkan bahwa SSH Host Key yang diterima Windows berbeda dengan Host Key yang sebelumnya tersimpan pada komputer client.
+
+## D. Penyebab Terjadinya SSH Host Key Changed
+
+SSH menggunakan Host Key sebagai identitas server untuk memastikan bahwa client terhubung ke server yang benar.
+
+Ketika Windows pertama kali terhubung ke Ubuntu Server, informasi Host Key akan disimpan secara otomatis dalam file:
+
+```text
+C:\Users\USERNAME\.ssh\known_hosts
+```
+
+File `known_hosts` berfungsi menyimpan identitas server yang pernah dihubungi oleh SSH Client.
+
+Pesan `REMOTE HOST IDENTIFICATION HAS CHANGED` dapat terjadi karena beberapa kondisi, seperti:
+
+1. Ubuntu Server mengalami instalasi ulang sehingga Host Key dibuat kembali.
+2. SSH Host Key pada server mengalami perubahan.
+3. IP Address yang sama digunakan oleh server berbeda.
+4. Sistem mendeteksi perbedaan identitas server dengan data yang sebelumnya tersimpan.
+
+Dalam praktik ini, solusi dilakukan dengan memeriksa fingerprint Host Key terbaru dari Ubuntu Server, kemudian memperbarui data identitas server yang tersimpan di Windows.
+
+**Catatan keamanan:** Jangan langsung mengabaikan peringatan tersebut. Pastikan fingerprint yang baru benar-benar berasal dari server yang dimaksud sebelum memperbarui data Host Key.
+
+## E. Langkah-Langkah Perbaikan SSH
+
+### 1. Menghapus Host Key Lama pada Windows
+
+Setelah memastikan bahwa perubahan Host Key memang berasal dari server yang benar, buka kembali CMD Windows.
+
+Masukkan perintah:
+
+```bash
+ssh-keygen -R 100.100.4.2
+```
+
+Keterangan:
+- `ssh-keygen` merupakan utilitas pengelolaan SSH Key.
+- `-R` digunakan untuk menghapus entri Host Key berdasarkan hostname atau IP Address tertentu.
+- `100.100.4.2` merupakan IP Address Ubuntu Server yang mengalami perubahan Host Key.
+
+Perintah tersebut akan menghapus entri identitas lama untuk IP `100.100.4.2` dari file `known_hosts`.
+
+Apabila berhasil, akan muncul informasi seperti:
+
+```text
+Host 100.100.4.2 found: line 16
+Host 100.100.4.2 found: line 17
+Host 100.100.4.2 found: line 18
+
+C:\Users\USERNAME\.ssh\known_hosts updated.
+```
+
+Angka baris dapat berbeda pada setiap komputer.
+
+File `known_hosts` yang lama juga akan disimpan sebagai file cadangan dengan nama `known_hosts.old`.
+
+**Fungsi:** Langkah ini menghilangkan data identitas lama yang sudah tidak sesuai sehingga SSH Client dapat mengenali identitas server terbaru.
+
+2. Memeriksa Fingerprint SSH pada Ubuntu Server
+
+Sebelum memperbarui Host Key pada Windows, lakukan pemeriksaan fingerprint langsung dari terminal Ubuntu Server.
+
+Masukkan perintah berikut:
+
+sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+
+Apabila sedang menggunakan root, perintah dapat dijalankan tanpa sudo:
+
+ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+
+Keterangan:
+
+ssh-keygen merupakan utilitas untuk mengelola dan memeriksa SSH Key.
+
+-l digunakan untuk menampilkan fingerprint dari sebuah public key.
+
+-f digunakan untuk menentukan file public key yang akan diperiksa.
+
+/etc/ssh/ssh_host_ed25519_key.pub merupakan file public Host Key milik SSH Server.
+
+Setelah perintah dijalankan, terminal akan menampilkan informasi fingerprint, misalnya:
+
+256 SHA256:xxxxxxxxxxxxxxxxxxxx root@arum (ED25519)
+
+Fingerprint tersebut merupakan identitas Host Key yang saat ini digunakan oleh Ubuntu Server.
+
+Simpan atau perhatikan fingerprint yang ditampilkan untuk dibandingkan dengan fingerprint yang muncul saat Windows melakukan koneksi SSH kembali.
+
+### 3. Menghubungkan Kembali Windows ke Ubuntu Server
+
+Setelah Host Key lama dihapus, lakukan koneksi SSH kembali.
+
+Masukkan perintah:
+
+```bash
+ssh arum@100.100.4.2
+```
+
+Karena identitas server belum tersimpan kembali pada Windows, SSH akan menampilkan konfirmasi keamanan seperti berikut:
+
+```text
+The authenticity of host '100.100.4.2' can't be established.
+
+ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxxx.
+
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+Pada bagian ini, periksa fingerprint yang ditampilkan dan cocokkan dengan fingerprint yang sebelumnya diperiksa langsung dari Ubuntu Server.
+
+Apabila fingerprint cocok, ketik:
+
+```text
+yes
+```
+
+Kemudian tekan Enter.
+
+Apabila berhasil, akan muncul pesan:
+
+```text
+Warning: Permanently added '100.100.4.2' (ED25519) to the list of known hosts.
+```
+
+Pesan tersebut menandakan bahwa Host Key terbaru telah berhasil disimpan ke dalam file `known_hosts` pada Windows.
+
+### 4. Melakukan Login ke Ubuntu Server
+
+Setelah Host Key berhasil disimpan, CMD akan meminta password akun Ubuntu Server.
+
+Masukkan password milik pengguna:
+
+```text
+arum
+```
+
+Tekan Enter setelah memasukkan password.
+
+Perlu diperhatikan bahwa ketika mengetik password SSH, karakter yang dimasukkan biasanya tidak ditampilkan pada layar. Hal tersebut merupakan mekanisme keamanan normal pada Linux.
+
+Apabila username dan password benar, koneksi SSH akan berhasil dan menampilkan informasi seperti:
+
+```text
+Welcome to Ubuntu 24.04.3 LTS
+```
+
+Prompt terminal juga akan berubah menjadi prompt Ubuntu Server, misalnya:
+
+```bash
+arum@arum:~$
+```
+
+Hal tersebut menunjukkan bahwa Windows berhasil terhubung dan masuk ke Ubuntu Server melalui SSH.
+
+## F. Pengujian Koneksi SSH
+
+Setelah berhasil login, lakukan beberapa pemeriksaan untuk memastikan koneksi SSH berjalan dengan baik.
+
+### 1. Memeriksa Identitas Server
+
+Masukkan perintah:
+
+```bash
+hostname
+```
+
+Perintah tersebut digunakan untuk menampilkan nama komputer atau hostname Ubuntu Server.
+
+### 2. Memeriksa IP Address Server
+
+Masukkan perintah:
+
+```bash
+ip addr
+```
+
+Pastikan interface `enp0s3` memiliki IP Address:
+
+```text
+100.100.4.2/30
+```
+
+### 3. Memeriksa Status SSH Server
+
+Masukkan perintah:
+
+```bash
+sudo systemctl status ssh
+```
+
+Perintah tersebut digunakan untuk melihat status layanan SSH pada Ubuntu Server.
+
+Apabila muncul informasi:
+
+```text
+Active: active (running)
+```
+
+Berarti layanan SSH sedang berjalan.
+
+### 4. Menguji Koneksi Keluar dari Server
+
+Setelah berhasil masuk melalui SSH, pengujian koneksi internet dapat dilakukan menggunakan:
+
+```bash
+ping 8.8.8.8
+```
+
+Untuk menguji DNS:
+
+```bash
+ping google.com
+```
+
+Apabila kedua pengujian berhasil, berarti server dapat menjangkau IP publik dan melakukan resolusi nama domain.
+
+## G. Troubleshooting Tambahan Apabila SSH Masih Gagal
+
+Apabila setelah memperbarui Host Key koneksi masih belum berhasil, lakukan pemeriksaan berikut.
+
+### 1. Memeriksa Status Layanan SSH
+
+Pada terminal Ubuntu Server, jalankan:
+
+```bash
+sudo systemctl status ssh
+```
+
+Apabila layanan belum aktif, coba jalankan:
+
+```bash
+sudo systemctl enable --now ssh
+```
+
+Perintah tersebut digunakan untuk mengaktifkan layanan SSH sekaligus mengatur agar layanan berjalan otomatis ketika sistem dinyalakan.
+
+### 2. Memeriksa Instalasi OpenSSH Server
+
+Apabila layanan SSH tidak ditemukan, periksa apakah paket OpenSSH Server sudah terpasang:
+
+```bash
+dpkg -l | grep openssh-server
+```
+
+Apabila belum terpasang, instal menggunakan:
+
+```bash
+sudo apt install openssh-server
+```
+
+Perintah instalasi memerlukan paket yang tersedia melalui repository atau media instalasi yang sesuai. Jika server belum memiliki internet, instalasi dapat dilakukan setelah repository lokal atau akses paket tersedia.
+
+### 3. Memeriksa Port SSH
+
+Masukkan perintah:
+
+```bash
+sudo ss -tlnp | grep :22
+```
+
+Perintah tersebut digunakan untuk memeriksa apakah SSH Server sedang mendengarkan koneksi pada port TCP 22.
+
+Apabila muncul informasi yang menunjukkan `LISTEN`, berarti layanan sedang membuka port tersebut.
+
+### 4. Memeriksa Koneksi dari Windows
+
+Apabila koneksi SSH masih gagal, buka CMD Windows dan masukkan:
+
+```bash
+ping 100.100.4.2
+```
+
+Selanjutnya, periksa port SSH menggunakan PowerShell:
+
+```powershell
+Test-NetConnection 100.100.4.2 -Port 22
+```
+
+Perhatikan hasil:
+
+```text
+TcpTestSucceeded : True
+```
+
+Apabila bernilai True, koneksi TCP menuju port SSH berhasil dijangkau.
+
+Apabila bernilai False, periksa layanan SSH, koneksi fisik, konfigurasi jaringan, serta firewall pada server dan router.
+
+## H. Hasil Akhir yang Diharapkan
+
+| No. | Tahapan | Hasil |
+|---|---|---|
+| 1 | Koneksi SSH awal | Terdeteksi perubahan Host Key |
+| 2 | Pemeriksaan fingerprint | Fingerprint server berhasil diperiksa |
+| 3 | Menghapus Host Key lama | Entri lama dihapus dari known_hosts |
+| 4 | Koneksi ulang SSH | Host Key baru berhasil dikenali |
+| 5 | Autentikasi pengguna | Login berhasil |
+| 6 | Pemeriksaan layanan SSH | Active (running) |
+| 7 | Pengujian koneksi | Server dapat dijangkau melalui SSH |
+
+## I. Kesimpulan
+
+Permasalahan koneksi SSH dari Windows CMD menuju Ubuntu Server disebabkan oleh perubahan identitas SSH Host Key yang sebelumnya tersimpan pada komputer client.
+
+Perbaikan dilakukan dengan memeriksa fingerprint Host Key pada Ubuntu Server, menghapus entri Host Key lama menggunakan perintah `ssh-keygen -R`, kemudian melakukan koneksi ulang agar identitas server terbaru dapat disimpan.
+
+Setelah fingerprint berhasil diverifikasi dan autentikasi pengguna dilakukan dengan benar, Windows dapat kembali terhubung ke Ubuntu Server menggunakan SSH melalui IP Address `100.100.4.2`.
+
+Dengan demikian, pengelolaan Ubuntu Server dapat dilakukan dari komputer client Windows tanpa harus selalu menggunakan terminal secara langsung pada perangkat server.
