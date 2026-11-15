@@ -1,162 +1,404 @@
-# Konfigurasi MikroTik dan Pengujian Jaringan UKOM
+# KONFIGURASI ROUTER MIKROTIK – UKOM JUNIOR NETWORK ADMINISTRATOR PAKET 3
 
-**Nama:** Arum Wigati  
-**Nomor Absen:** 04  
-**Materi:** Konfigurasi MikroTik, Hotspot, DHCP Server, Simple Queue, dan Ubuntu Server
+## 1. Tujuan Konfigurasi
 
-## 1. Persiapan Router MikroTik
+Melakukan konfigurasi router MikroTik sebagai gateway internet sekaligus perangkat distribusi jaringan untuk client kabel, server, dan client wireless menggunakan fasilitas Hotspot.
 
-1. Atur IP pada Control Panel laptop yang digunakan untuk mengakses Winbox, yaitu `10.10.25.2/28`.
-2. Lakukan **Reset Configuration** pada router MikroTik jika diperlukan.
-3. Buka Winbox dan hubungkan ke router.
-4. Atur nama interface sesuai fungsinya:
+Konfigurasi dilakukan menggunakan satu perangkat router MikroTik dengan pembagian interface sesuai kebutuhan soal UKOM Junior Network Administrator Paket 3.
 
-   | Interface | Fungsi |
-   |---|---|
-   | `ether1` | ISP/WAN |
-   | `ether2` | Jaringan server |
-   | `ether3` | Jaringan client kabel |
-   | `wlan1` | Jaringan Hotspot |
+## 2. Topologi dan Pembagian Interface
 
-## 2. Konfigurasi IP Address
+Router menggunakan empat interface dengan fungsi sebagai berikut:
 
-Masuk ke **IP → Addresses**, lalu tambahkan alamat IP berikut.
+| Interface | Nama Interface | Network | Fungsi |
+|---|---|---|---|
+| Ether1 | Ether1-ISP | Sesuai ISP | Koneksi internet |
+| Ether2 | Ether2-CLIENT | 10.10.4.0/28 | Client kabel |
+| Ether3 | Ether3-SERVER | 100.100.4.0/30 | Web Server dan Database Server |
+| Wlan1 | Wlan1-HOTSPOT | 192.168.4.0/24 | Client wireless |
 
-| Interface | IP Address |
+**Keterangan:** Angka 4 pada oktet ketiga merupakan nomor absen. Apabila nomor absen berbeda, sesuaikan alamat IP berdasarkan nomor masing-masing.
+
+## 3. Konfigurasi Router MikroTik
+
+### 3.1. Menghubungkan Router ke ISP Menggunakan DHCP Client
+
+Konfigurasi DHCP Client dilakukan agar router memperoleh IP Address secara otomatis dari ISP sehingga dapat terhubung ke jaringan internet.
+
+**Langkah-langkah:**
+
+1. Buka aplikasi WinBox dan hubungkan ke router MikroTik.
+2. Masuk ke menu **IP → DHCP Client**.
+3. Klik tombol **+ (Add)**.
+4. Atur konfigurasi berikut:
+   - Interface: `ether1`
+   - Use Peer DNS: `yes` (opsional)
+   - Add Default Route: `yes`
+5. Klik **Apply**, kemudian **OK**.
+
+Pastikan DHCP Client memperoleh alamat IP dan statusnya menunjukkan **bound**.
+
+### 3.2. Mengubah Nama Interface
+
+Penggantian nama interface dilakukan untuk mempermudah identifikasi setiap port berdasarkan fungsi jaringan yang digunakan.
+
+**Langkah-langkah:**
+
+1. Buka menu **Interfaces**.
+2. Pilih interface yang ingin diubah namanya.
+3. Klik dua kali pada interface tersebut.
+4. Ubah nama interface sesuai pembagian berikut:
+
+| Interface Awal | Nama Baru |
 |---|---|
-| `ether2` | `10.10.4.1/28` |
-| `ether3` | `100.100.4.1/30` |
-| `wlan1` | `192.168.4.1/24` |
+| ether1 | Ether1-ISP |
+| ether2 | Ether2-CLIENT |
+| ether3 | Ether3-SERVER |
+| wlan1 | Wlan1-HOTSPOT |
 
-Selanjutnya, masuk ke **IP → DHCP Client**, tambahkan DHCP Client pada `ether1` agar router memperoleh IP dari ISP.
+5. Klik **Apply**, kemudian **OK** pada setiap interface.
 
-## 3. Konfigurasi DHCP Server pada ether2
+### 3.3. Mengatur IP Address pada Setiap Interface
 
-1. Buka **IP → Pool**, lalu buat pool IP untuk perangkat yang menggunakan jaringan `ether2`. Pastikan IP statis yang sudah digunakan tidak dimasukkan ke dalam pool.
-2. Buka **IP → DHCP Server → DHCP Setup**.
-3. Pilih interface `ether2`.
-4. Gunakan network `10.10.4.0/28` dan gateway `10.10.4.1`.
-5. Pilih pool yang sudah dibuat, lalu selesaikan DHCP Setup.
-6. Pastikan DHCP Server berstatus aktif.
+IP Address diberikan pada masing-masing interface agar router dapat menjadi gateway untuk setiap jaringan lokal.
 
-> **Catatan:** Jika Ubuntu Server menggunakan IP statis `10.10.4.3/28` dan laptop pengelola menggunakan `10.10.4.2/28`, jangan masukkan kedua alamat tersebut ke dalam DHCP pool.
+**Langkah-langkah:**
 
-## 4. Konfigurasi NAT
+1. Masuk ke menu **IP → Addresses**.
+2. Klik tombol **+ (Add)**.
+3. Masukkan IP Address untuk setiap interface.
 
-1. Masuk ke **IP → Firewall → NAT**.
-2. Klik **+** untuk menambahkan rule.
-3. Pada tab **General**, atur:
-   - **Chain:** `srcnat`
-   - **Out. Interface:** `ether1`
-4. Pada tab **Action**, pilih `masquerade`.
-5. Klik **Apply**, lalu **OK**.
+**Konfigurasi Ether2-CLIENT:**
 
-Konfigurasi ini memungkinkan perangkat dalam jaringan lokal mengakses internet melalui router MikroTik.
+- Address: `10.10.4.1/28`
+- Interface: `Ether2-CLIENT`
 
-## 5. Konfigurasi DNS MikroTik
+**Konfigurasi Ether3-SERVER:**
 
-1. Buka **IP → DNS**.
-2. Isi **Servers** dengan `1.1.1.1` dan `8.8.8.8`.
-3. Centang **Allow Remote Requests** jika diperlukan.
-4. Klik **Apply**, lalu **OK**.
+- Address: `100.100.4.1/30`
+- Interface: `Ether3-SERVER`
 
-Setelah Ubuntu Server selesai dikonfigurasi dan layanan DNS aktif, tambahkan DNS Static untuk domain website:
+**Konfigurasi Wlan1-HOTSPOT:**
 
-1. Masuk ke **IP → DNS → Static**.
-2. Klik **+**.
-3. Isi:
-   - **Name:** `ukom12tkj-4.sch.id`
-   - **Type:** `A`
-   - **Address:** `10.10.4.3`
-4. Klik **Apply**, lalu **OK**.
+- Address: `192.168.4.1/24`
+- Interface: `Wlan1-HOTSPOT`
 
-Alamat `10.10.4.3` adalah IP Ubuntu Server yang digunakan pada konfigurasi ini. Sesuaikan jika IP server yang ditetapkan penguji berbeda.
+4. Klik **Apply**, kemudian **OK**.
 
-## 6. Konfigurasi WiFi
+Setelah selesai, router memiliki tiga alamat IP gateway untuk jaringan lokal yang berbeda.
 
-1. Buka menu **WiFi** atau **Wireless**, sesuai versi RouterOS.
+### 3.4. Mengatur DNS dan DNS Static
+
+DNS digunakan untuk menerjemahkan nama domain menjadi alamat IP sehingga perangkat dapat mengakses layanan menggunakan nama domain.
+
+**A. Mengaktifkan DNS**
+
+1. Masuk ke menu **IP → DNS**.
+2. Pada bagian Servers, masukkan DNS berikut (tapi ga gw masukin, langsung centang allow remote requests):
+   - `8.8.8.8`
+   - `1.1.1.1`
+3. Centang bagian **Allow Remote Requests**.
+4. Klik **Apply**, kemudian **OK**.
+
+**B. Menambahkan DNS Static**
+
+DNS Static digunakan untuk mengarahkan nama domain server menuju alamat IP server.
+
+1. Masih di menu **IP → DNS**, buka tab **Static**.
+2. Klik tombol **+ (Add)**.
+3. Isi konfigurasi berikut:
+
+   - Name: `ukom12tkja-4.sch.id`
+   - Type: `A`
+   - Address: `100.100.4.2`
+
+4. Klik **Apply**, kemudian **OK**.
+
+Dengan konfigurasi tersebut, domain `ukom12tkja-4.sch.id` diarahkan menuju server dengan IP Address `100.100.4.2`.
+
+### 3.5. Mengatur Firewall NAT
+
+Firewall NAT digunakan agar perangkat pada jaringan lokal dapat mengakses internet melalui IP Address yang diperoleh router dari ISP.
+
+**Langkah-langkah:**
+
+1. Masuk ke menu **IP → Firewall**.
+2. Pilih tab **NAT**.
+3. Klik tombol **+ (Add)**.
+4. Pada tab General, atur:
+
+   - Chain: `srcnat`
+   - Out. Interface: `Ether1-ISP`
+
+5. Pindah ke tab Action.
+6. Atur:
+
+   - Action: `masquerade`
+
+7. Klik **Apply**, kemudian **OK**.
+
+Konfigurasi ini memungkinkan alamat IP jaringan lokal diterjemahkan menggunakan alamat IP pada interface yang terhubung ke ISP.
+
+### 3.6. Mengatur Wireless pada Wlan1
+
+Wireless dikonfigurasi agar router dapat menyediakan jaringan nirkabel yang nantinya digunakan oleh HP dan laptop melalui layanan Hotspot.
+
+**Langkah-langkah:**
+
+1. Masuk ke menu **WiFi** atau **Wireless**, sesuai versi RouterOS dan perangkat.
 2. Pilih interface `wlan1`.
-3. Atur mode menjadi `ap bridge` jika tersedia.
-4. Pilih band yang sesuai dengan perangkat.
-5. Isi SSID sesuai ketentuan UKOM, misalnya `ukom12tkj-4`.
-6. Aktifkan interface, lalu klik **Apply** dan **OK**.
+3. Atur konfigurasi berikut:
 
-## 7. Konfigurasi Hotspot
+   - Mode: `ap bridge` (jika tersedia)
+   - Band: `2GHz-B/G/N`
+   - SSID: `ukom12tkja-4`
+   - Frequency: Sesuaikan dengan kondisi jaringan
 
-1. Buka **IP → Hotspot**.
-2. Klik **Hotspot Setup**, lalu pilih interface `wlan1`.
-3. Gunakan gateway `192.168.4.1/24`.
-4. Atur IP Pool, misalnya `192.168.4.10-192.168.4.254`.
-5. Setelah selesai, buka tab **User Profiles**.
-6. Buat atau sesuaikan profil dengan pengaturan:
-   - **Address Pool:** pool Hotspot yang dibuat.
-   - **Shared Users:** `2`.
-   - **Rate Limit:** `7M/7M`.
-7. Buka tab **Users**, lalu buat akun Hotspot sesuai ketentuan pengujian.
+4. Jika diperlukan, buat Security Profile dengan autentikasi WPA2-PSK dan password wireless.
+5. Pastikan interface dalam keadaan aktif atau enabled.
+6. Klik **Apply**, kemudian **OK**.
 
-## 8. Pengujian Awal Speed Test
+Setelah konfigurasi selesai, SSID akan muncul pada perangkat yang memiliki fitur wireless.
 
-Lakukan pengujian jaringan **sebelum melanjutkan instalasi dan konfigurasi Ubuntu Server**.
+### 3.7. Mengatur Hotspot
 
-### A. Pengujian Hotspot
+Hotspot digunakan untuk mengatur autentikasi pengguna sebelum client dapat mengakses jaringan internet melalui wireless.
 
-1. Hubungkan HP atau laptop ke WiFi Hotspot.
-2. Masukkan username dan password pada halaman login Hotspot.
-3. Setelah berhasil login, buka situs Speedtest.
-4. Jalankan pengujian kecepatan internet.
-5. Pastikan kecepatan Hotspot tidak melebihi **7 Mbps**, sesuai batas pada User Profile.
+**A. Menjalankan Hotspot Setup**
 
-### B. Pengujian Client Kabel
+1. Masuk ke menu **IP → Hotspot**.
+2. Pilih tab **Servers**.
+3. Klik tombol **Hotspot Setup**.
+4. Ikuti tahapan konfigurasi berikut:
 
-1. Hubungkan laptop ke interface `ether3`.
-2. Atur IPv4 laptop secara manual:
-   - **IP Address:** `100.100.4.2`
-   - **Subnet Mask:** `255.255.255.252`
-   - **Default Gateway:** `100.100.4.1`
-   - **DNS Server:** `8.8.8.8`
-3. Buka situs Speedtest dan jalankan pengujian.
-4. Pastikan kecepatan jaringan kabel maksimal **10 Mbps**.
+   - Hotspot Interface: `Wlan1-HOTSPOT`
+   - Local Address of Network: `192.168.4.1/24`
+   - Address Pool of Network: Gunakan pool yang tersedia atau buat pool khusus, misalnya `192.168.4.2-192.168.4.254`
+   - Select Certificate: `none`
+   - IP Address of SMTP Server: `0.0.0.0`
+   - DNS Servers: `8.8.8.8` (tpi biasanya udah otomatis dapet dri ether1, jdi gausah ditambahin lgi)
+   - DNS Name: `ukom12tkja-4.sch.id` (tpi gw gapernah nambahin sih, jdi gausah)
+   - Name of Local Hotspot User: Sesuaikan kebutuhan
+   - Password: Sesuaikan kebutuhan
 
-Jika hasil pengujian melebihi batas, periksa kembali pengaturan Hotspot User Profile dan Simple Queue.
+5. Klik **Next** sampai proses konfigurasi selesai.
 
-## 9. Konfigurasi Simple Queue untuk Client Kabel
+Hotspot Setup akan membuat konfigurasi dasar Hotspot pada interface wireless, termasuk DHCP Server dan IP Pool yang diperlukan.
 
-1. Buka **Queues → Simple Queues**.
-2. Klik **+**.
-3. Isi pengaturan berikut:
-   - **Name:** `Client-Kabel`
-   - **Target:** `100.100.4.2/32`
-   - **Max Limit:** `10M/10M`
-4. Klik **Apply**, lalu **OK**.
-5. Jalankan kembali Speedtest pada laptop kabel untuk memastikan kecepatannya tidak melebihi batas 10 Mbps.
+**B. Membuat User Profile Hotspot**
 
-## 10. Instalasi dan Konfigurasi Ubuntu Server
+User Profile digunakan untuk mengatur hak akses dan batas kecepatan setiap pengguna Hotspot.
 
-Setelah konfigurasi MikroTik selesai dan pengujian awal berhasil, lanjutkan instalasi Ubuntu Server.
+1. Masuk ke menu **IP → Hotspot**.
+2. Pilih tab **User Profiles**.
+3. Klik tombol **+ (Add)**.
+4. Atur konfigurasi berikut:
 
-1. Instal Ubuntu Server pada perangkat atau mesin virtual yang digunakan.
-2. Konfigurasikan IP Address server sesuai rancangan jaringan `10.10.4.0/28`.
-3. Atur IP Ubuntu Server menjadi `10.10.4.3/28`.
-4. Atur gateway menjadi `10.10.4.1`.
-5. Pastikan server dapat berkomunikasi dengan router MikroTik.
-6. Lakukan pengujian koneksi dan pastikan IP yang digunakan sesuai konfigurasi.
+   - Name: `PROFILE-UKOM`
+   - Address Pool: Pool Hotspot yang telah dibuat
+   - Shared Users: `2`
+   - Rate Limit: `7M/7M`
 
-## 11. Pengujian DNS Website
+5. Klik **Apply**, kemudian **OK**.
 
-Setelah Ubuntu Server terpasang dan layanan DNS sudah dikonfigurasi:
+Rate Limit `7M/7M` digunakan untuk membatasi kecepatan upload dan download setiap pengguna sesuai pengaturan profil.
 
-1. Pastikan layanan DNS berjalan pada Ubuntu Server.
-2. Pastikan domain `ukom12tkj-4.sch.id` mengarah ke IP Ubuntu Server `10.10.4.3`.
-3. Dari laptop client, lakukan pengujian DNS menggunakan `nslookup`.
-4. Pastikan hasil resolusi domain menunjukkan IP server yang benar.
-5. Buka domain website melalui browser dan pastikan website dapat diakses.
+**C. Membuat User Hotspot untuk HP**
 
-## 12. Kesimpulan
+1. Masuk ke tab **Users**.
+2. Klik tombol **+ (Add)**.
+3. Masukkan konfigurasi berikut:
 
-Konfigurasi ini mencakup pengaturan interface dan IP Address MikroTik, DHCP Server, NAT, DNS, WiFi, Hotspot, serta pembatasan kecepatan melalui User Profile dan Simple Queue. Pengujian dilakukan terlebih dahulu pada jaringan Hotspot dan kabel. Setelah jaringan berjalan sesuai batas kecepatan, instalasi Ubuntu Server dan pengujian domain website dilanjutkan.
+   - Server: `all`
+   - Name: `hp-arum`
+   - Password: `123`
+   - Profile: `PROFILE-UKOM`
 
-## Catatan Sebelum Digunakan
+4. Klik **Apply**, kemudian **OK**.
 
-- Dokumen ini menggunakan jaringan `10.10.4.0/28` dan IP server `10.10.4.3/28`. Jika kisi-kisi penguji menetapkan jaringan berbeda, sesuaikan seluruh IP terkait.
-- Pastikan nama domain dan SSID sama persis dengan ketentuan penguji.
-- DNS Static di MikroTik membantu klien yang menggunakan MikroTik sebagai DNS resolver. Untuk domain lokal, konfigurasi DNS pada Ubuntu Server dan DNS yang dipakai klien juga harus sesuai.
+**D. Membuat User Hotspot untuk Laptop**
+
+1. Masih pada tab **Users**.
+2. Klik tombol **+ (Add)**.
+3. Masukkan konfigurasi berikut:
+
+   - Server: `all`
+   - Name: `laptop-arum`
+   - Password: `123`
+   - Profile: `PROFILE-UKOM`
+
+4. Klik **Apply**, kemudian **OK**.
+
+Dengan demikian, terdapat dua akun Hotspot yang dapat digunakan untuk login melalui HP dan laptop.
+
+Catatan: Shared Users bernilai 2 berarti satu akun dapat digunakan oleh maksimal dua sesi secara bersamaan. Pengaturan ini bukan batas jumlah akun yang dapat dibuat.
+
+### 3.8. Membuat DHCP Server untuk Ether2-CLIENT
+
+DHCP Server digunakan untuk memberikan IP Address secara otomatis kepada perangkat client yang terhubung melalui kabel LAN pada Ether2.
+
+**A. Menjalankan DHCP Setup**
+
+1. Masuk ke menu **IP → DHCP Server**.
+2. Pilih tab **DHCP**.
+3. Klik tombol **DHCP Setup**.
+4. Ikuti tahapan berikut:
+
+   - DHCP Server Interface: `Ether2-CLIENT`
+   - DHCP Address Space: `10.10.4.0/28`
+   - Gateway for DHCP Network: `10.10.4.1`
+   - Addresses to Give Out: `10.10.4.2-10.10.4.14`
+   - DNS Servers: `10.10.4.1` atau DNS yang digunakan
+   - Lease Time: Sesuaikan kebutuhan
+
+5. Klik **Next** sampai proses konfigurasi selesai.
+
+**B. Memastikan DHCP Server Aktif**
+
+1. Buka kembali menu **IP → DHCP Server**.
+2. Pastikan DHCP Server telah dibuat pada interface `Ether2-CLIENT`.
+3. Periksa tab Leases untuk melihat perangkat yang memperoleh IP Address.
+
+Contoh IP Address yang dapat diperoleh client:
+
+`10.10.4.14`
+
+Alamat tersebut merupakan salah satu alamat host yang tersedia pada subnet `10.10.4.0/28`.
+
+### 3.9. Mengatur Queue untuk Client Kabel
+
+Queue digunakan untuk mengatur penggunaan bandwidth agar kecepatan akses internet client kabel tidak melebihi batas yang ditentukan dalam soal UKOM.
+
+Berdasarkan ketentuan UKOM, setiap client kabel memiliki batas kecepatan sebesar **10 Mbps**.
+
+**Langkah-langkah:**
+
+1. Masuk ke menu **Queues**.
+2. Pilih tab **Simple Queues**.
+3. Klik tombol **+ (Add)**.
+4. Pada tab General, atur:
+
+   - Name: `QUEUE-CLIENT-KABEL`
+   - Target: `ETHER2-CLIENT`
+
+5. Pada tab General, bagian Max Limit, atur:
+
+   - Max Limit Target Upload: `10M`
+   - Max Limit Target Download: `10M`
+
+6. Klik **Apply**, kemudian **OK**.
+
+Dengan konfigurasi tersebut, client kabel memiliki batas maksimum upload dan download sebesar 10 Mbps.
+
+Catatan: Target IP harus disesuaikan dengan IP client yang sebenarnya. Agar aturan Queue tidak berubah ketika DHCP memberikan alamat baru, gunakan Static Lease pada perangkat client.
+
+---
+
+## 4. Pengujian Koneksi Jaringan
+
+Setelah seluruh konfigurasi selesai, lakukan pengujian untuk memastikan setiap jaringan dapat berfungsi sesuai ketentuan UKOM.
+
+### 4.1. Pengujian Koneksi Internet pada Router
+
+1. Buka menu **New Terminal** pada WinBox.
+2. Jalankan perintah:
+
+   `ping 8.8.8.8`
+
+3. Perhatikan hasil pengujian.
+4. Jika muncul balasan berupa `time=...ms`, berarti router berhasil menjangkau alamat IP tujuan.
+
+Selanjutnya, lakukan pengujian DNS:
+
+`ping google.com`
+
+Jika nama domain berhasil diterjemahkan menjadi alamat IP dan mendapatkan balasan, konfigurasi DNS telah berfungsi.
+
+### 4.2. Pengujian Client Wireless Menggunakan HP
+
+1. Aktifkan WiFi pada HP.
+2. Cari SSID `ukom12tkja-4`.
+3. Hubungkan HP ke jaringan tersebut menggunakan password wireless apabila telah diaktifkan.
+4. Setelah terhubung, buka browser.
+5. Tunggu hingga halaman login Hotspot muncul.
+6. Masukkan akun berikut:
+
+   - Username: `hp-arum`
+   - Password: `123`
+
+7. Klik Login.
+8. Pastikan HP berhasil masuk ke jaringan Hotspot.
+9. Buka browser dan akses website untuk memastikan koneksi internet berjalan.
+
+### 4.3. Pengujian Client Wireless Menggunakan Laptop
+
+1. Aktifkan WiFi pada laptop.
+2. Hubungkan laptop ke SSID `ukom12tkja-4`.
+3. Buka browser dan tunggu halaman login Hotspot muncul.
+4. Masukkan akun berikut:
+
+   - Username: `laptop-arum`
+   - Password: `123`
+
+5. Klik Login.
+6. Pastikan laptop berhasil terhubung ke internet.
+7. Lakukan pengujian akses website.
+
+### 4.4. Pengujian Client Kabel Menggunakan Laptop
+
+1. Hubungkan laptop ke interface `Ether2-CLIENT` menggunakan kabel LAN.
+2. Pastikan pengaturan IPv4 pada laptop menggunakan pilihan Obtain an IP Address Automatically.
+3. Buka Command Prompt (CMD).
+4. Jalankan perintah:
+
+   `ipconfig`
+
+5. Periksa apakah laptop mendapatkan IP Address secara otomatis dari DHCP Server.
+
+Contoh hasil konfigurasi:
+
+- IPv4 Address: `10.10.4.14`
+- Subnet Mask: `255.255.255.240`
+- Default Gateway: `10.10.4.1`
+
+6. Lakukan pengujian koneksi gateway:
+
+   `ping 10.10.4.1`
+
+7. Lakukan pengujian koneksi internet:
+
+   `ping 8.8.8.8`
+
+8. Buka browser untuk memastikan laptop dapat mengakses internet.
+
+### 4.5. Pengujian Bandwidth Client
+
+Pengujian bandwidth dilakukan untuk memastikan pembatasan kecepatan pada masing-masing jaringan telah berjalan.
+
+**Client Kabel:**
+
+- Maksimum Download: 10 Mbps
+- Maksimum Upload: 10 Mbps
+
+**Client Wireless:**
+
+- Maksimum Download: 7 Mbps
+- Maksimum Upload: 7 Mbps
+
+Pengujian dapat dilakukan menggunakan aplikasi Speedtest atau dengan mengamati penggunaan bandwidth pada menu Queues di WinBox.
+
+## 5. Kesimpulan
+
+Berdasarkan konfigurasi dan pengujian yang telah dilakukan, router MikroTik digunakan sebagai gateway internet sekaligus perangkat distribusi jaringan untuk tiga segmen, yaitu jaringan client kabel, jaringan server, dan jaringan wireless Hotspot.
+
+Jaringan client kabel memperoleh IP Address secara otomatis melalui DHCP Server pada Ether2. Sementara itu, jaringan wireless menggunakan layanan Hotspot yang mengharuskan pengguna melakukan autentikasi menggunakan username dan password yang telah dibuat.
+
+Pengaturan Queue digunakan untuk membatasi bandwidth client kabel sebesar 10 Mbps, sedangkan User Profile Hotspot digunakan untuk membatasi bandwidth setiap pengguna wireless sebesar 7 Mbps.
+
+Dengan demikian, konfigurasi router diharapkan dapat memenuhi kebutuhan jaringan sesuai ketentuan UKOM Junior Network Administrator Paket 3.
+
+---
+
+**Catatan Dokumentasi:**
+
+Seluruh hasil konfigurasi dan pengujian dapat dilengkapi dengan screenshot WinBox, CMD, halaman login Hotspot, serta hasil pengujian Speedtest sebagai bukti pelaksanaan praktik.
